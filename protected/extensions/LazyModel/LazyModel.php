@@ -15,6 +15,7 @@ class LazyModel extends CPortlet
     public $model;
     private $_form;
     public $cssClass;
+    public $validation;
 
     public function init()
     {
