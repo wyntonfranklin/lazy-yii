@@ -89,6 +89,10 @@ class LazyModel extends CPortlet
         return '</form>';
     }
 
+    public function addButtons(){
+
+    }
+
 
 
     public function renderContent()
