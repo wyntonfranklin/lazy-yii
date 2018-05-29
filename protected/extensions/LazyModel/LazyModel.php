@@ -7,6 +7,7 @@
  */
 
 Yii::import('zii.widgets.CPortlet');
+Yii::import(__DIR__.'Elements.php');
 
 class LazyModel extends CPortlet
 {
@@ -16,6 +17,7 @@ class LazyModel extends CPortlet
     private $_form;
     public $cssClass;
     public $validation;
+    public $elements;
 
     public function init()
     {
@@ -28,6 +30,11 @@ class LazyModel extends CPortlet
     public function registerScripts()
     {
 
+    }
+
+    public function getElements()
+    {
+        $allInputs = $this->elements;
     }
 
 
@@ -99,11 +106,35 @@ class LazyModel extends CPortlet
     public function renderContent()
     {
         $output = $this->formHead();
-        foreach( $this->getModel()->attributes as $key=>$attribute){
-            $output .= $this->formBody($key);
-        }
+        $output .= $this->getContent();
         $output .= $this->formEnd();
         echo $output;
+    }
+
+
+    public function getContent()
+    {
+        $output = '';
+        if( !empty($this->elements) ){
+            foreach( $this->elements as $key=>$element ){
+                $output .= $this->formBody($key);
+            }
+        }else{
+            foreach( $this->getAllAttributes() as $key=>$attribute){
+                $output .= $this->formBody($key);
+            }
+        }
+        return $output;
+
+    }
+
+    public function getAllAttributes()
+    {
+        if( !empty($this->elements) ){
+
+        }else{
+            return $this->getModel()->attributes;
+        }
     }
 
 
