@@ -7,10 +7,12 @@
  */
 
 Yii::import('zii.widgets.CPortlet');
-Yii::import(__DIR__.'Elements.php');
+Yii::import('application.extensions.LazyModel.LazyElements');
+Yii::import('application.extensions.LazyModel.LazyButtons');
 
 class LazyModel extends CPortlet
 {
+
 
     private $_model;
     public $model;
@@ -18,6 +20,15 @@ class LazyModel extends CPortlet
     public $cssClass;
     public $validation;
     public $elements;
+    public $form;
+    public $buttons;
+    public $summaryText='';
+    public $formid;
+    public $action;
+    public $method ='post';
+    public $buttonsClass= 'row buttons';
+
+
 
     public function init()
     {
@@ -27,12 +38,14 @@ class LazyModel extends CPortlet
         $this->registerScripts();
     }
 
-    public function registerScripts()
+
+    protected function registerScripts()
     {
 
     }
 
-    public function getElements()
+
+    private function getElements()
     {
         $allInputs = $this->elements;
     }
@@ -43,17 +56,20 @@ class LazyModel extends CPortlet
         return $this->_model;
     }
 
-    public function setForm()
+
+    private function setForm()
     {
-        $this->_form = new CActiveForm();
+        $this->form = new CActiveForm();
     }
 
-    public function getForm()
+
+    private function getForm()
     {
-        return $this->_form;
+        return $this->form;
     }
 
-    public function formAttributes()
+
+    private function formAttributes()
     {
         return array(
 
@@ -67,38 +83,123 @@ class LazyModel extends CPortlet
 
     public function formContainerStart()
     {
-
+        return '<div class="form">';
     }
+
 
     public function formContainerEnd()
     {
-
+        return '</div>';
     }
+
 
     public function formHead()
     {
-        return '<form>';
+        $options = $this->createOptions();
+        return '<form '.$this->addClasses( $options ).'>';
     }
 
-    public function formBody( $value )
+
+    public function createForm()
     {
-        $form = $this->getForm();
+
+    }
+
+
+    public function formBody( $value, LazyElements $element=null )
+    {
+        $form = $this->form;
         $model = $this->getModel();
-        $o = '<div class="row">';
-        $o .= $form->labelEx( $model, $value) . '<br>';
-        $o .= CHtml::textField('', $model->$value,array());
+        if( !empty( $element->containerClass)){
+            $o = '<div class="'.$element->containerClass.'">';
+        }else{
+            $o = '<div class="row">';
+        }
+        $o .= $this->getLabel( $model,$value, $element )  . '<br>';
+        $o .= $this->getField($model, $value, $element );
         $o .= $form->error($model,$value);
         $o .= '</div>';
         return $o;
     }
+
+
+    public function formGroupDiv( $class )
+    {
+
+    }
+
+
+    /**
+     * @param $model CActiveRecord
+     * @param $value string
+     * @param $element LazyElements
+     * @return mixed
+     */
+    private function getField( $model, $value, $element )
+    {
+        if( !empty( $element) ){
+            return $element->getFieldByType( $value );
+        }else{
+            return $this->form->textField($model, $value, array());
+        }
+    }
+
+
+
+    private function getLabel( $model, $value, $element)
+    {
+        if(!empty($element->name)){
+            return $element->name;
+        }else{
+           return $this->form->labelEx( $model, $value);
+        }
+    }
+
+
+    private function getElementId( $value )
+    {
+
+    }
+
 
     public function formEnd()
     {
         return '</form>';
     }
 
-    public function addButtons(){
 
+    public function addButtons()
+    {
+        $o= '';
+        $o .='<div class="'.$this->buttonsClass.'">';
+        if( empty($this->buttons) ){
+           $o .= $this->defaultButtons();
+        }else{
+          $o .=  $this->loadButtons();
+        }
+        $o .='</div>';
+        return $o;
+    }
+
+    private function defaultButtons()
+    {
+        return CHtml::submitButton('Submit') .'&nbsp;' . CHtml::button('Reset');
+    }
+
+
+    private function loadButtons()
+    {
+        $o = '';
+        foreach( $this->buttons as $name => $attributes ){
+            $o .= $this->specialButtons(new LazyButtons($name, $attributes)) .' &nbsp;';
+        }
+        return $o;
+    }
+
+
+    private function specialButtons( LazyButtons $button )
+    {
+        return CHtml::button($button->btnName, $button->attributes());
     }
 
 
@@ -112,21 +213,25 @@ class LazyModel extends CPortlet
     }
 
 
+
     public function getContent()
     {
-        $output = '';
+        $output = $this->formContainerStart();
         if( !empty($this->elements) ){
             foreach( $this->elements as $key=>$element ){
-                $output .= $this->formBody($key);
+                $output .= $this->formBody($key, new LazyElements($this->form, $this->model, $element ));
             }
         }else{
             foreach( $this->getAllAttributes() as $key=>$attribute){
                 $output .= $this->formBody($key);
             }
         }
+        $output .= $this->addButtons();
+        $output .= $this->formContainerEnd();
         return $output;
-
     }
+
+
 
     public function getAllAttributes()
     {
@@ -135,6 +240,28 @@ class LazyModel extends CPortlet
         }else{
             return $this->getModel()->attributes;
         }
+    }
+
+
+    private function addClasses( $options )
+    {
+        $classOptions = '';
+        foreach( $options as $option=>$value){
+            if( !empty( $value ) ){
+                $classOptions .= $option.'='.'"'.$value.'"'.' ';
+            }
+        }
+        return $classOptions;
+    }
+
+    private function createOptions()
+    {
+        return [
+            'id' => $this->formid,
+            'class' => $this->cssClass,
+            'action' =>$this->action,
+            'method' => $this->method
+        ];
     }
 
 
