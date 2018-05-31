@@ -18,7 +18,8 @@ class LazyModel extends CPortlet
     public $model;
     private $_form;
     public $cssClass;
-    public $validation;
+    public $validation=false;
+    public $clientValidation=false;
     public $elements;
     public $form;
     public $buttons;
@@ -60,6 +61,11 @@ class LazyModel extends CPortlet
     private function setForm()
     {
         $this->form = new CActiveForm();
+        $this->form->enableAjaxValidation = true;
+        $this->form->id = $this->formid;
+        $this->form->clientOptions = [
+            'validateOnSubmit'=>true,
+        ];
     }
 
 
@@ -206,10 +212,21 @@ class LazyModel extends CPortlet
 
     public function renderContent()
     {
-        $output = $this->formHead();
+        $output = '<div class="form-summary">'.$this->addSummary().'</div>';
+        $output .= $this->formHead();
         $output .= $this->getContent();
-        $output .= $this->formEnd();
+        if( $this->validation ){
+            $output .= $this->form->run();
+        }else{
+            $output .= $this->formEnd();
+        }
         echo $output;
+    }
+
+    public function addSummary(){
+        if( $this->summaryText ){
+            return $this->summaryText;
+        }
     }
 
 
@@ -259,9 +276,18 @@ class LazyModel extends CPortlet
         return [
             'id' => $this->formid,
             'class' => $this->cssClass,
-            'action' =>$this->action,
+            'action' =>$this->getActionUrl(),
             'method' => $this->method
         ];
+    }
+
+    private function getActionUrl()
+    {
+        if( $this->action ){
+            return $this->action;
+        }else{
+            return Yii::app()->request->requestUri;
+        }
     }
 
 

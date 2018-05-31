@@ -16,6 +16,7 @@ class LazyElements
     public $dropDownData = '';
     public $rows = '';
     public $cols = '';
+    public $htmlAttributes;
     private $form;
     private $model;
 
@@ -32,11 +33,26 @@ class LazyElements
 
     public function attributes()
     {
+        if( !empty( $this->getHtmlAttributes())){
+            return array_merge($this->getClassAttributes(), $this->getHtmlAttributes());
+        }else{
+            return $this->getClassAttributes();
+        }
+    }
+
+    public function getClassAttributes()
+    {
         return [
             'class' => (!empty($this->cssClass)) ? $this->cssClass : '',
             'id' => (!empty($this->elementId)) ? $this->elementId : null,
             'style' => (!empty($this->elementStyle)) ? $this->elementStyle : '',
         ];
+    }
+
+
+    public function getHtmlAttributes()
+    {
+        return $this->htmlAttributes;
     }
 
     /**
@@ -71,6 +87,15 @@ class LazyElements
                 break;
             case 'datetime':
                 return $this->getDateTimeField( $value );
+                break;
+            case 'tel':
+                return $this->getTelField( $value );
+                break;
+            case 'email':
+                return $this->getEmailField( $value );
+                break;
+            case 'url':
+                return $this->getUrlField( $value );
                 break;
             default :
                 return $this->form->textField($this->model, $value, array());
@@ -144,6 +169,21 @@ class LazyElements
     private function getDateTimeField( $value )
     {
         return $this->form->dateTimeField( $this->model, $value, $this->attributes() );
+    }
+
+    private function getUrlField( $value )
+    {
+        return $this->form->urlField( $this->model, $value, $this->attributes() );
+    }
+
+    private function getEmailField( $value )
+    {
+        return $this->form->emailField( $this->model, $value, $this->attributes() );
+    }
+
+    private function getTelField( $value )
+    {
+        return $this->form->telField( $this->model, $value, $this->attributes() );
     }
 
 }
